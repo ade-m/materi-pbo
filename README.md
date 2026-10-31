@@ -6,7 +6,7 @@ Materi perkuliahan **Pemrograman Berorientasi Objek** — **Ade Maulana., S.Kom.
 
 ## Daftar materi
 
-- [Bab 4 — JDBC](https://ade-m.github.io/materi-pbo/jdbc/): 25 slide, simulator akses 10 tahap, panduan praktik, dan kuis.
+- [Bab 4 — JDBC](https://ade-m.github.io/materi-pbo/jdbc/): 27 slide, simulator akses 10 tahap, panduan PostgreSQL, sinkronisasi model Java, dan 6 soal kuis.
 
 ## Struktur
 
