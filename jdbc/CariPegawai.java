@@ -2,7 +2,7 @@ import java.sql.*;
 
 public class CariPegawai {
   public static void main(String[] args) {
-    String url = "jdbc:mysql://localhost:3306/kampus";
+    String url = "jdbc:postgresql://localhost:5432/kampus";
     try (Connection con = DriverManager.getConnection(url,
            System.getenv("DB_USER"), System.getenv("DB_PASSWORD"));
          PreparedStatement ps = con.prepareStatement(
