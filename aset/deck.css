@@ -1,0 +1,64 @@
+.cover h1{font-size:clamp(50px,5vw,72px);max-width:1040px}
+.cover .tags{margin:22px 0 26px}
+.cover .hint{margin-top:16px}
+.cover-grid{grid-template-columns:1.18fr 1fr}
+.cover-sequence{display:grid;gap:12px;background:var(--pale);padding:24px 28px;border-radius:14px}
+.cover-sequence div{display:flex;align-items:center;gap:20px;padding:13px 0}
+.cover-sequence div+div{border-top:1px solid var(--line)}
+.cover-sequence span,.topic-list span{color:var(--cyan);font-variant-numeric:tabular-nums}
+.cover-sequence strong{font-size:24px}
+.topic-list{display:grid;gap:12px;max-width:870px}
+.topic-list button{display:flex;align-items:center;gap:20px;text-align:left;font-size:23px;padding:15px 22px}
+.concept-slide p{font-size:30px;line-height:1.55;max-width:66ch}
+.source-note{margin-top:20px}
+.practice .subtitle{margin-bottom:18px}
+.choices{display:flex;gap:10px;flex-wrap:wrap}
+.choices button{background:var(--pale);color:var(--navy)}
+.choices button[aria-pressed=true]{background:var(--blue);color:white}
+.lab pre{margin:16px 0;font-size:19px;line-height:1.4;max-height:230px;overflow:auto;padding:18px 22px}
+.result{padding:12px 18px;background:var(--pale);border-radius:10px;margin:12px 0;overflow-wrap:anywhere}
+.result p{margin:4px 0 0;font-size:18px}
+.result samp,.live-lab output{white-space:pre-wrap}
+.practice .hint{margin-top:12px}
+.live-lab label{display:block;margin:12px 0;font-size:19px;font-weight:650}
+.live-lab input{padding:12px 16px;width:min(100%,600px);border:1px solid #879ab1;border-radius:10px;color:var(--navy);font-size:21px}
+.live-lab output{display:block;font-size:22px}
+.quiz-columns{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.quiz-columns fieldset{margin:0;min-width:0;border:1px solid var(--line);border-radius:12px;padding:14px 17px}
+.quiz-columns legend{font-size:21px;font-weight:700}
+.option{display:flex;align-items:start;gap:10px;padding:8px 0;font-size:19px;cursor:pointer}
+.option input{margin-top:5px;accent-color:var(--blue);width:17px;height:17px}
+.feedback{margin:10px 0 0;font-size:17px;color:#9a2431}
+.feedback[data-ok=true]{color:#11624a}
+.quiz-status{display:flex;align-items:center;gap:16px;margin-top:16px}
+.quiz-status p{font-size:18px;margin:0}
+#kuis-form progress{accent-color:var(--blue);width:150px;margin:12px 10px 0 0}
+.paging{display:flex;gap:25px;flex-wrap:wrap;margin-top:24px}
+#toolbar a{font-size:13px;font-weight:700;align-self:center;margin-right:4px}
+[hidden]{display:none!important}
+.print-answers{display:none}
+@media(max-width:700px){#toolbar{padding-inline:8px;justify-content:center;gap:5px 10px}}
+@media print{.quiz-slide .print-answers{display:block;margin-top:16px}.print-answers p{font-size:16px}.quiz-slide .quiz-status,.quiz-slide progress,.quiz-slide [data-progress],.quiz-slide .feedback,.practice [data-reveal],.practice .choices,.paging{display:none!important}}
+.cover-sequence span,.topic-list span{color:#086980}
+@media screen and (max-width:700px) and (orientation:portrait){
+ #viewport{height:auto;min-height:calc(100dvh - 122px);display:block;padding:10px 10px 138px;overflow:visible}
+ .slide,.slide.active{width:100%;height:auto;min-height:calc(100dvh - 150px);padding:28px 18px 22px;transform:none!important}
+ .slide:before{left:18px}
+ .slide footer{position:static;margin-top:30px;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px}
+ .course-identity,.lecturer-identity{white-space:normal;grid-column:1/-1}
+ .cover h1,.slide h2{font-size:clamp(27px,7vw,38px);overflow-wrap:anywhere}
+ .slide h3{font-size:20px}
+ .cover .subtitle,.slide .subtitle{font-size:16px;margin-bottom:20px}
+ .cover-grid,.quiz-columns{grid-template-columns:minmax(0,1fr);gap:16px}
+ .cover .lead,.concept-slide p,.live-lab output,.slide .feature p,.slide .callout p{font-size:18px}
+ .cover-sequence{padding:8px 16px}
+ .cover-sequence strong,.topic-list button{font-size:17px}
+ .feature,.callout{padding:16px}
+ .lab pre{font-size:14px;padding:13px;max-height:none}
+ .quiz-columns legend,.option,.quiz-status p{font-size:16px}
+ .slide .hint{font-size:13px}
+ #toolbar{position:fixed;bottom:0;left:0;right:0;z-index:3}
+ #toolbar button,#toolbar a{min-height:40px}
+ #toolbar a{display:flex;align-items:center}
+ #notes{z-index:5}
+}

@@ -1,6 +1,6 @@
 from pathlib import Path
 from html import escape as e
-from urllib.parse import quote
+import re, json, base64
 from kurikulum import M
 root=Path(__file__).resolve().parents[1]
 def wrap(title,base,body,js=False):
@@ -10,6 +10,23 @@ def wrap(title,base,body,js=False):
 <body><div class="top"><div class="shell"><a href="{base}">Materi PBO</a><span>Ade Maulana, S.Kom., M.T.I.</span></div></div>
 <main class="shell">{body}</main><footer><div class="shell">Pemrograman Berorientasi Objek · Ade Maulana, S.Kom., M.T.I.</div></footer></body></html>
 '''
+
+jdbc=(root/'jdbc/index.html').read_text()
+jdbc_style=jdbc.split('<style>',1)[1].split('</style>',1)[0]
+base_css=jdbc_style[jdbc_style.index(':root{'):jdbc_style.index('.print-quiz{')]
+base_css=re.sub(r'#slide-\d+[^{}]*\{[^{}]*\}', '', base_css)
+footer_css=re.search(r'\.slide footer\{display:grid.*?tabular-nums\}',jdbc_style).group()
+font_css=''
+for weight in (600,700,800):
+ face=re.search(r"@font-face\s*\{[^}]*font-weight:\s*"+str(weight)+r";[^}]*\}",jdbc_style).group()
+ data=base64.b64decode(re.search(r'base64,([^)]*)',face)[1])
+ name=f'inter-{weight}.ttf'
+ (root/'aset'/name).write_bytes(data)
+ font_css+=f'@font-face{{font-family:Inter;src:url({name}) format("truetype");font-weight:{weight};font-display:swap}}\n'
+(root/'aset/deck-base.css').write_text('@font-face{font-family:Inter;src:url(inter.ttf) format("truetype");font-display:swap}\n'+font_css+base_css+'\n'+footer_css+'\n')
+chrome=jdbc.split('</main>',1)[1].split('<script>',1)[0]
+chrome=chrome.replace('Jelajahi Bab 4','Daftar slide').replace('01 / 27','01').replace('<button id="toc-open">','<a href="../../">Materi PBO</a><button id="toc-open">')
+
 refs={
  7:('Java Language Specification: Packages','https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html'),
  8:('Java Language Specification: Classes','https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html'),
@@ -49,17 +66,41 @@ for i,m in enumerate(M):
   live=f'<div class="live-lab" data-live="{slug}"><h3>{e(heading)}</h3><label for="masukan-lab">{e(label)}</label><input id="masukan-lab" type="{kind}" value="{e(value)}"{limit}><output class="result" aria-live="polite"></output></div>'
  ref,url=refs[m['ref']]
  src=f'PBO - Pertemuan {m["source"]}.pdf'
- body=f'''<header class="hero"><h1>{e(t)}</h1><p>{e(m['intro'])}</p><span class="meta">Pertemuan {e(n)}</span></header>
-<div class="layout"><aside class="aside"><nav aria-label="Isi modul"><a href="#konsep">Konsep</a><a href="#simulasi">Simulasi</a><a href="#kuis">Kuis</a><a href="#praktik">Praktik</a></nav>
-<p class="meta" data-progress>0/{len(qs)} jawaban benar</p><progress max="{len(qs)}" value="0" aria-label="Jawaban kuis benar"></progress></aside>
-<div><section id="konsep"><h2>Konsep inti</h2>{concepts}</section>
-<section id="simulasi"><h2>Prediksi hasil</h2><p>Pilih skenario dan tebak hasilnya sebelum membuka pembahasan. Potongan kode Java menampilkan hasil yang diharapkan, tanpa menjalankan Java di browser.</p>
-<div class="lab"><div class="choices" aria-label="Skenario">{buttons}</div>{examples}<button type="button" data-reveal class="primary" aria-expanded="false" aria-controls="hasil-0">Lihat hasil dan alasan</button>{live}</div></section>
-<section id="kuis"><h2>Cek pemahaman</h2><form id="kuis-form" data-lesson="{slug}">{''.join(qs)}<p data-score role="status"></p><button type="reset" class="secondary">Ulangi kuis</button></form></section>
-<section id="praktik"><h2>Latihan mandiri</h2><div class="task"><p>{e(m['task'])}</p></div></section>
-<section aria-labelledby="sumber"><h2 id="sumber">Sumber</h2><p>Diadaptasi dari <cite>{e(src)}</cite>, halaman {e(m['pages'])}. <a href="{url}">{e(ref)}</a>.</p></section>
-<nav class="paging" aria-label="Navigasi pertemuan">{''.join(links)}</nav></div></div>'''
- folder=root/'materi'/slug;folder.mkdir(parents=True,exist_ok=True);(folder/'index.html').write_text(wrap(t,'../../',body,True))
+ slides=[]
+ def add(heading, subtitle, body, note, cls=''):
+  slides.append((heading,subtitle,body,note,cls))
+ add(t,'Pertemuan '+n+' · Pemrograman Berorientasi Objek',
+     f'<div class="cover-grid"><div><p class="lead">{e(m["intro"])}</p><div class="tags"><span>Konsep</span><span>Simulasi</span><span>Kuis</span></div><button data-jump="2">Mulai belajar</button><p class="hint">← → untuk slide · O daftar · F layar penuh</p></div><div class="cover-sequence">{ "".join(f"<div><span>{k:02}</span><strong>{e(label)}</strong></div>" for k,label in enumerate(("Pelajari konsep","Prediksi hasil","Cek pemahaman"),1)) }</div></div>',
+     'Minta mahasiswa menyebutkan pengalaman atau contoh terkait topik sebelum membuka konsep inti.','cover')
+ add('Peta pembelajaran','Topik yang dibahas',
+     '<div class="topic-list">'+''.join(f'<button class="secondary" data-jump="{j+3}"><span>{j+1:02}</span>{e(k)}</button>' for j,(k,v) in enumerate(m['concepts']))+'</div>',
+     'Gunakan peta untuk melompat ke konsep yang ingin dibahas.')
+ for j,(k,v) in enumerate(m['concepts']):
+  add(k,f'Konsep {j+1} dari {len(m["concepts"])}',f'<div class="feature concept-slide"><p>{e(v)}</p></div><p class="hint source-note">Sumber: {e(src)}, hlm. {e(m["pages"])}</p>',
+      'Minta satu contoh tambahan dari mahasiswa, kemudian cocokkan dengan definisi pada slide.')
+ add('Prediksi hasil','Pilih skenario, tebak hasilnya, lalu buka pembahasan.',
+     f'<div class="lab"><div class="choices" aria-label="Skenario">{buttons}</div>{examples}<button type="button" data-reveal aria-expanded="false" aria-controls="hasil-0">Lihat hasil dan alasan</button></div><p class="hint">Cuplikan kode dan hasil yang diharapkan; Java tidak dijalankan di browser.</p>',
+     'Beri waktu untuk memprediksi. Buka hasil setelah mahasiswa menjelaskan alasannya.','practice')
+ if live:
+  add('Coba dengan masukan sendiri','Ubah nilai untuk melihat hasil simulasi.',live,
+      'Uji satu nilai normal dan satu nilai batas. Bandingkan prediksi dengan hasil simulasi.')
+ add('Cek pemahaman','Pilih jawaban untuk melihat umpan balik.',
+     f'<form id="kuis-form" data-lesson="{slug}"><div class="quiz-columns">{"".join(qs)}</div><div class="quiz-status"><p data-score role="status"></p><button type="reset" class="secondary">Ulangi kuis</button></div><progress max="{len(qs)}" value="0" aria-label="Jawaban kuis benar"></progress><small data-progress>0/{len(qs)} jawaban benar</small></form><div class="print-answers"><h3>Kunci dan pembahasan</h3>{"".join(f"<p><b>{j+1}. {e(q[1])}</b> — {e(q[4])}</p>" for j,q in enumerate(m["quiz"]))}</div>',
+     'Diskusikan alasan di balik jawaban, termasuk mengapa pilihan lain kurang tepat.','quiz-slide')
+ add('Latihan mandiri','Terapkan konsep pada program Java.',
+     f'<div class="callout"><p>{e(m["task"])}</p></div>',
+     'Minta mahasiswa menjelaskan hasil dan satu kasus yang mereka uji.')
+ add('Sumber dan pertemuan berikutnya','Rujukan untuk memperdalam materi.',
+     f'<div class="feature"><p>Diadaptasi dari <cite>{e(src)}</cite>, halaman {e(m["pages"])}.</p><p><a href="{url}">{e(ref)}</a></p></div><nav class="paging" aria-label="Navigasi pertemuan">{"".join(links)}<a href="../../">Kembali ke daftar materi</a></nav>',
+     'Arahkan mahasiswa ke rujukan dan pertemuan berikutnya.')
+ htmlslides=[]
+ for j,(heading,sub,content,note,cls) in enumerate(slides,1):
+  tag='h1' if j==1 else 'h2'
+  htmlslides.append(f'<section class="slide {cls}{" active" if j==1 else ""}" id="slide-{j}" aria-label="Slide {j}: {e(heading)}"{" inert" if j>1 else ""}><header><{tag}>{e(heading)}</{tag}><p class="subtitle">{e(sub)}</p></header><div class="body">{content}</div><footer><span class="course-identity">Mata Kuliah Pemrograman Berorientasi Objek</span><span class="lecturer-identity">Ade Maulana., S.Kom., M.T.I.</span><span class="footer-source">Pertemuan {e(n)}</span><span>{j:02} / {len(slides)}</span></footer></section>')
+ notes=json.dumps([x[3] for x in slides],ensure_ascii=False).replace('<','\\u003c')
+ page=f'''<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(t)} | Materi PBO</title><link rel="stylesheet" href="../../aset/deck-base.css"><link rel="stylesheet" href="../../aset/deck.css"><script defer src="../../aset/deck.js"></script><script defer src="../../aset/pbo.js"></script></head><body><main id="viewport">{"".join(htmlslides)}</main>{chrome}<script type="application/json" id="deck-notes">{notes}</script></body></html>'''
+ folder=root/'materi'/slug;folder.mkdir(parents=True,exist_ok=True);(folder/'index.html').write_text(page)
+
 rows=''.join(f'<li><span class="meta">Pertemuan {e(m["no"])}</span><div><a href="materi/{m["slug"]}/">{e(m["title"])}</a><p>{e(m["intro"])}</p></div></li>' for m in M)
 body=f'''<header class="hero"><h1>Pemrograman Berorientasi Objek</h1><p>Pelajari konsep Java, coba skenario, dan cek pemahaman lewat kuis setiap pertemuan.</p></header>
 <div class="catalog"><section aria-labelledby="daftar"><h2 id="daftar">Materi per pertemuan</h2><ol>{rows}</ol></section>

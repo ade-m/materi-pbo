@@ -26,3 +26,5 @@ Referensi materi ditautkan di presentasi. Font Inter menggunakan SIL Open Font L
 Katalog mencakup Pertemuan 1–7, 9–11, 13–14, serta 11 Bonus, 13 Bonus, dan 14 Alternatif. Pertemuan 5–7 diadaptasi dari satu PDF gabungan. Pertemuan 8 dan 12 tidak disertakan karena tidak ada PDF sumber. Setiap modul mencantumkan halaman sumber dan menyediakan skenario prediksi, kuis, serta latihan.
 
 Ubah data pada `scripts/kurikulum.py`, lalu jalankan `PYTHONDONTWRITEBYTECODE=1 python3 scripts/build-pbo.py`. Kuis menyimpan pilihan secara lokal di browser. Skenario kode menampilkan hasil pembelajaran yang telah disiapkan, bukan menjalankan Java di browser.
+
+Modul per pertemuan menggunakan template presentasi JDBC. Build mengambil kerangka visual dari `jdbc/index.html`; `aset/deck.css` menyesuaikan konten pertemuan dan tampilan potret ponsel. Navigasi: panah kiri/kanan, O untuk daftar slide, N untuk catatan, dan F untuk layar penuh.
