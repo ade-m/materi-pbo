@@ -20,3 +20,9 @@ Untuk materi berikutnya, tambahkan folder topik baru dan tautkan dari halaman de
 Presentasi: panah untuk navigasi; O daftar slide; F layar penuh. Di simulator (slide 11 dan20), panah/Spasi menjalankan tahapan; PageUp/PageDown berpindah slide. Semua simulasi memakai JavaScript lokal; tidak terhubung ke database nyata.
 
 Referensi materi ditautkan di presentasi. Font Inter menggunakan SIL Open Font License; lihat `jdbc/FONT-LICENSE.txt`.
+
+## Materi per pertemuan
+
+Katalog mencakup Pertemuan 1–7, 9–11, 13–14, serta 11 Bonus, 13 Bonus, dan 14 Alternatif. Pertemuan 5–7 diadaptasi dari satu PDF gabungan. Pertemuan 8 dan 12 tidak disertakan karena tidak ada PDF sumber. Setiap modul mencantumkan halaman sumber dan menyediakan skenario prediksi, kuis, serta latihan.
+
+Ubah data pada `scripts/kurikulum.py`, lalu jalankan `PYTHONDONTWRITEBYTECODE=1 python3 scripts/build-pbo.py`. Kuis menyimpan pilihan secara lokal di browser. Skenario kode menampilkan hasil pembelajaran yang telah disiapkan, bukan menjalankan Java di browser.
