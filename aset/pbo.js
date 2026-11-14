@@ -1,29 +1,66 @@
 'use strict';
-const lab = document.querySelector('.lab');
-if (lab) {
-  const buttons = [...lab.querySelectorAll('[data-case]')];
-  const examples = [...lab.querySelectorAll('[data-example]')];
-  const reveal = lab.querySelector('[data-reveal]');
-  let active = 0;
-  function select(i) {
-    active = i;
-    buttons.forEach((b,j) => b.setAttribute('aria-pressed', String(i === j)));
-    examples.forEach((x,j) => {
-      x.hidden = i !== j;
-      x.querySelector('.result').hidden = true;
-    });
-    reveal.setAttribute('aria-expanded','false');
-    reveal.setAttribute('aria-controls','hasil-'+i);
-    reveal.textContent = 'Lihat hasil dan alasan';
+const trace = document.querySelector('.trace-lab');
+if (trace) {
+  const find = s => trace.querySelector(s);
+  const cases = JSON.parse(find('[data-traces]').textContent);
+  const tabs = [...trace.querySelectorAll('[data-case]')];
+  const code = find('[data-code]');
+  const form = find('[data-prediction]');
+  const select = form.querySelector('select');
+  const outcome = find('[data-outcome]');
+  let chosen = 0, step = -1, answer = null;
+  function render() {
+    const c = cases[chosen], final = step === c.steps.length;
+    const current = c.steps[Math.min(step,c.steps.length-1)];
+    const waiting = step === c.steps.length-1 && answer === null;
+    tabs.forEach((b,i) => b.setAttribute('aria-pressed',String(i===chosen)));
+    code.replaceChildren(...c.code.map((line,i) => {
+      const row = document.createElement('span');
+      row.className = 'trace-line';
+      if (current?.[0]===i+1) row.setAttribute('aria-current','step');
+      const num=document.createElement('span');
+      num.textContent=String(i+1).padStart(2,'0');
+      num.setAttribute('aria-hidden','true');
+      row.append(num,line);
+      return row;
+    }));
+    const active = code.querySelector('[aria-current]');
+    if (active) code.parentElement.scrollTop = Math.max(0,active.offsetTop - code.offsetTop - 38);
+    find('[data-position]').textContent = final ? 'Penelusuran selesai' : step < 0 ? 'Siap menelusuri' : 'Langkah '+(step+1)+' / '+c.steps.length;
+    const title=document.createElement('h3'), state=document.createElement('p');
+    title.textContent=current?.[1] || 'Keadaan awal';
+    state.textContent=current?.[2] || 'Pilih Langkah pertama untuk memulai.';
+    find('[data-state]').replaceChildren(title,state);
+    form.hidden = !waiting;
+    outcome.hidden = !final;
+    if (final) {
+      const verdict=document.createElement('strong'), result=document.createElement('samp'), reason=document.createElement('p');
+      verdict.textContent=answer===c.result?'Prediksi tepat':answer===''?'Hasil dan alasan':'Prediksi belum tepat';
+      result.textContent=c.result;
+      reason.textContent=c.reason;
+      outcome.replaceChildren(verdict,result,reason);
+    }
+    find('[data-back]').disabled=step<0;
+    const next=find('[data-step]');
+    next.disabled=waiting || final;
+    next.textContent=step<0?'Langkah pertama':final?'Selesai':'Langkah berikutnya';
   }
-  buttons.forEach((b,i) => b.addEventListener('click', () => select(i)));
-  reveal.addEventListener('click', () => {
-    const result = examples[active].querySelector('.result');
-    result.hidden = !result.hidden;
-    reveal.setAttribute('aria-expanded',String(!result.hidden));
-    reveal.textContent = result.hidden ? 'Lihat hasil dan alasan' : 'Sembunyikan hasil';
-  });
-  select(0);
+  function reset(i=chosen) {
+    chosen=i; step=-1; answer=null;
+    const values=[...new Set(cases.map(c=>c.result))];
+    const shift=(chosen+1)%values.length;
+    select.replaceChildren(new Option('Pilih perkiraan hasil',''));
+    select.options[0].disabled=true;
+    values.slice(shift).concat(values.slice(0,shift)).forEach(v=>select.add(new Option(v.replaceAll('\n',' · '),v)));
+    select.add(new Option('Belum yakin','skip'));
+    render();
+  }
+  tabs.forEach((b,i)=>b.addEventListener('click',()=>reset(i)));
+  find('[data-step]').addEventListener('click',()=>{step++;render();if(!form.hidden)select.focus();});
+  find('[data-back]').addEventListener('click',()=>{step--;answer=null;select.selectedIndex=0;render();});
+  find('[data-reset]').addEventListener('click',()=>reset());
+  form.addEventListener('submit',e=>{e.preventDefault();if(!select.value)return;answer=select.value==='skip'?'':select.value;step=cases[chosen].steps.length;render();find('[data-back]').focus();});
+  reset();
 }
 const quiz = document.querySelector('#kuis-form');
 if (quiz) {

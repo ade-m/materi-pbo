@@ -63,8 +63,5 @@
   window.addEventListener('resize',fit);
   window.addEventListener('fullscreenchange',fit);
   window.addEventListener('hashchange',fromHash);
-  let result;
-  window.addEventListener('beforeprint',()=>{result=document.querySelector('[data-example]:not([hidden]) .result');if(result){result.dataset.printHidden=String(result.hidden);result.hidden=false;}});
-  window.addEventListener('afterprint',()=>{if(result){result.hidden=result.dataset.printHidden==='true';delete result.dataset.printHidden;}});
   fromHash();
 })();

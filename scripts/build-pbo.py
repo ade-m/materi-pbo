@@ -2,6 +2,7 @@ from pathlib import Path
 from html import escape as e
 import re, json, base64
 from kurikulum import M
+from jejak import T
 root=Path(__file__).resolve().parents[1]
 def wrap(title,base,body,js=False):
  return f'''<!doctype html>
@@ -48,8 +49,18 @@ labs={
 for i,m in enumerate(M):
  n,t,slug=m['no'],m['title'],m['slug']
  concepts=''.join(f'<div class="concept"><h3>{e(k)}</h3><p>{e(v)}</p></div>' for k,v in m['concepts'])
- buttons=''.join(f'<button type="button" data-case="{j}" aria-pressed="{str(j==0).lower()}">{e(c[0])}</button>' for j,c in enumerate(m['cases']))
- examples=''.join(f'<div data-example="{j}"{" hidden" if j else ""}><pre tabindex="0"><code>{e(code)}</code></pre><div class="result" id="hasil-{j}" hidden aria-live="polite"><strong>Hasil</strong><br><samp>{e(result)}</samp><p>{e(reason)}</p></div></div>' for j,(_,code,result,reason) in enumerate(m['cases']))
+ traces=[dict(name=name,code=code.splitlines(),result=result,reason=reason,steps=steps)
+         for (name,code,result,reason),steps in zip(m['cases'],T[slug])]
+ assert len(traces)==len(m['cases'])==len(T[slug])
+ assert all(len(t['steps'])>=2 and all(1<=line<=len(t['code']) for line,_,_ in t['steps']) for t in traces)
+ trace_json=json.dumps(traces,ensure_ascii=False).replace('<','\\u003c')
+ buttons=''.join(f'<button type="button" data-case="{j}" aria-pressed="{str(j==0).lower()}">{e(c["name"])}</button>' for j,c in enumerate(traces))
+ trace_html=f'''<div class="trace-lab"><div class="choices" aria-label="Skenario">{buttons}</div>
+ <div class="trace-grid"><pre tabindex="0" aria-label="Kode yang ditelusuri"><code data-code></code></pre>
+ <div class="trace-state"><p class="hint" data-position></p><div data-state aria-live="polite"></div><form data-prediction hidden><label>Prediksi hasil <select required></select></label><button type="submit">Periksa</button></form><div data-outcome role="status" hidden></div></div></div>
+ <div class="trace-controls"><button type="button" data-back class="secondary">Mundur</button><button type="button" data-step>Langkah pertama</button><button type="button" data-reset class="secondary">Ulangi</button></div>
+ <script type="application/json" data-traces>{trace_json}</script></div>
+ <div class="trace-print"><p><b>{e(traces[0]['name'])}</b> — {e(traces[0]['reason'])}</p><pre>{e(chr(10).join(traces[0]['code']))}</pre><p><b>Hasil:</b> {e(traces[0]['result'])}</p></div>'''
  qs=[]
  for j,(question,correct,a,b,reason) in enumerate(m['quiz']):
   choices=[correct,a,b]; k=(i+j+1)%3; choices=choices[k:]+choices[:k]
@@ -70,7 +81,7 @@ for i,m in enumerate(M):
  def add(heading, subtitle, body, note, cls=''):
   slides.append((heading,subtitle,body,note,cls))
  add(t,'Pertemuan '+n+' · Pemrograman Berorientasi Objek',
-     f'<div class="cover-grid"><div><p class="lead">{e(m["intro"])}</p><div class="tags"><span>Konsep</span><span>Simulasi</span><span>Kuis</span></div><button data-jump="2">Mulai belajar</button><p class="hint">← → untuk slide · O daftar · F layar penuh</p></div><div class="cover-sequence">{ "".join(f"<div><span>{k:02}</span><strong>{e(label)}</strong></div>" for k,label in enumerate(("Pelajari konsep","Prediksi hasil","Cek pemahaman"),1)) }</div></div>',
+     f'<div class="cover-grid"><div><p class="lead">{e(m["intro"])}</p><div class="tags"><span>Konsep</span><span>Simulasi</span><span>Kuis</span></div><button data-jump="2">Mulai belajar</button> <button class="secondary" data-jump="{len(m["concepts"])+3}">Buka lab</button><p class="hint">← → untuk slide · O daftar · F layar penuh</p></div><div class="cover-sequence">{ "".join(f"<div><span>{k:02}</span><strong>{e(label)}</strong></div>" for k,label in enumerate(("Pelajari konsep","Lab bertahap","Cek pemahaman"),1)) }</div></div>',
      'Minta mahasiswa menyebutkan pengalaman atau contoh terkait topik sebelum membuka konsep inti.','cover')
  add('Peta pembelajaran','Topik yang dibahas',
      '<div class="topic-list">'+''.join(f'<button class="secondary" data-jump="{j+3}"><span>{j+1:02}</span>{e(k)}</button>' for j,(k,v) in enumerate(m['concepts']))+'</div>',
@@ -78,9 +89,9 @@ for i,m in enumerate(M):
  for j,(k,v) in enumerate(m['concepts']):
   add(k,f'Konsep {j+1} dari {len(m["concepts"])}',f'<div class="feature concept-slide"><p>{e(v)}</p></div><p class="hint source-note">Sumber: {e(src)}, hlm. {e(m["pages"])}</p>',
       'Minta satu contoh tambahan dari mahasiswa, kemudian cocokkan dengan definisi pada slide.')
- add('Prediksi hasil','Pilih skenario, tebak hasilnya, lalu buka pembahasan.',
-     f'<div class="lab"><div class="choices" aria-label="Skenario">{buttons}</div>{examples}<button type="button" data-reveal aria-expanded="false" aria-controls="hasil-0">Lihat hasil dan alasan</button></div><p class="hint">Cuplikan kode dan hasil yang diharapkan; Java tidak dijalankan di browser.</p>',
-     'Beri waktu untuk memprediksi. Buka hasil setelah mahasiswa menjelaskan alasannya.','practice')
+ add('Lab: telusuri dan prediksi','Jalankan satu tahap, amati keadaan, lalu prediksi hasil akhir.',
+     trace_html+'<p class="hint">Simulasi terarah. Cuplikan kode tidak dijalankan oleh JVM di browser.</p>',
+     'Minta mahasiswa memprediksi keadaan pada tahap berikutnya, kemudian bandingkan dengan panel keadaan.','practice')
  if live:
   add('Coba dengan masukan sendiri','Ubah nilai untuk melihat hasil simulasi.',live,
       'Uji satu nilai normal dan satu nilai batas. Bandingkan prediksi dengan hasil simulasi.')
@@ -102,7 +113,7 @@ for i,m in enumerate(M):
  folder=root/'materi'/slug;folder.mkdir(parents=True,exist_ok=True);(folder/'index.html').write_text(page)
 
 rows=''.join(f'<li><span class="meta">Pertemuan {e(m["no"])}</span><div><a href="materi/{m["slug"]}/">{e(m["title"])}</a><p>{e(m["intro"])}</p></div></li>' for m in M)
-body=f'''<header class="hero"><h1>Pemrograman Berorientasi Objek</h1><p>Pelajari konsep Java, coba skenario, dan cek pemahaman lewat kuis setiap pertemuan.</p></header>
+body=f'''<header class="hero"><h1>Pemrograman Berorientasi Objek</h1><p>Telusuri perubahan program langkah demi langkah, uji prediksi, lalu cek pemahaman di setiap pertemuan.</p></header>
 <div class="catalog"><section aria-labelledby="daftar"><h2 id="daftar">Materi per pertemuan</h2><ol>{rows}</ol></section>
 <section aria-labelledby="jdbc"><h2 id="jdbc">Akses basis data</h2><div class="jdbc-row"><span class="meta">Materi JDBC</span><div><a href="jdbc/">Java Database Connectivity</a><p>27 slide, simulasi PostgreSQL, sinkronisasi model Java, dan pilihan koneksi lokal atau connection string.</p></div><a href="jdbc/bab-4-jdbc.pdf">Unduh PDF</a></div></section></div>'''
 (root/'index.html').write_text(wrap('Daftar pertemuan','./',body))

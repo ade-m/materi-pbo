@@ -28,3 +28,5 @@ Katalog mencakup Pertemuan 1–7, 9–11, 13–14, serta 11 Bonus, 13 Bonus, dan
 Ubah data pada `scripts/kurikulum.py`, lalu jalankan `PYTHONDONTWRITEBYTECODE=1 python3 scripts/build-pbo.py`. Kuis menyimpan pilihan secara lokal di browser. Skenario kode menampilkan hasil pembelajaran yang telah disiapkan, bukan menjalankan Java di browser.
 
 Modul per pertemuan menggunakan template presentasi JDBC. Build mengambil kerangka visual dari `jdbc/index.html`; `aset/deck.css` menyesuaikan konten pertemuan dan tampilan potret ponsel. Navigasi: panah kiri/kanan, O untuk daftar slide, N untuk catatan, dan F untuk layar penuh.
+
+Lab setiap pertemuan menyorot baris kode dan memperlihatkan perubahan keadaan per langkah. Mahasiswa bisa mundur atau mengulang, lalu memilih prediksi sebelum hasil dibuka. Skenario dan keadaan tiap langkah didefinisikan di `scripts/kurikulum.py` dan `scripts/jejak.py`. Lima pertemuan juga punya simulasi dengan masukan sendiri.
